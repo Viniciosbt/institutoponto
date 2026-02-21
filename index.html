@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponto Fácil - Instituto Relâmpago</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            font-size: 16px;
+            color: #666;
+            font-weight: normal;
+            margin-bottom: 20px;
+        }
+
+        #clock {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--text-color);
+            margin: 20px 0;
+        }
+
+        button {
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .btn-scan {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-print {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        #reader {
+            width: 100%;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none; /* Escondido até clicar no botão */
+        }
+
+        .history-section {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #555;
+        }
+
+        /* Regras para a Impressão / Exportação PDF */
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            button, #reader, #clock, h2 {
+                display: none !important;
+            }
+            .history-section {
+                margin-top: 0;
+            }
+            h1 {
+                text-align: center;
+                color: black;
+                margin-bottom: 30px;
+            }
+            table {
+                border: 1px solid #000;
+            }
+            th, td {
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Ponto Fácil</h1>
+        <h2>Instituto Relâmpago</h2>
+
+        <div id="clock">00:00:00</div>
+
+        <button class="btn-scan" id="btn-scan" onclick="startScanner()">Ler QR Code para Bater Ponto</button>
+        
+        <div id="reader"></div>
+
+        <button class="btn-print" onclick="window.print()">Exportar / Imprimir Planilha</button>
+
+        <div class="history-section">
+            <h3 style="margin-bottom: 10px; color: #444;">Histórico de Pontos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Hora de Entrada</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Atualiza o relógio em tempo real
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('pt-BR');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        let html5QrcodeScanner = null;
+
+        // Inicia a câmera
+        function startScanner() {
+            const readerDiv = document.getElementById('reader');
+            const btnScan = document.getElementById('btn-scan');
+            
+            readerDiv.style.display = 'block';
+            btnScan.style.display = 'none'; // Esconde o botão enquanto lê
+
+            const html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, // Usa a câmera traseira no celular
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText, decodedResult) => {
+                    // Quando ler o QR Code com sucesso
+                    html5QrCode.stop().then(() => {
+                        readerDiv.style.display = 'none';
+                        btnScan.style.display = 'block';
+                        registrarPonto();
+                        alert("Ponto registrado com sucesso!");
+                    });
+                },
+                (errorMessage) => {
+                    // Ignora erros de leitura contínua (quando não acha o QR code ainda)
+                }
+            ).catch((err) => {
+                alert("Erro ao acessar a câmera. Verifique as permissões.");
+                readerDiv.style.display = 'none';
+                btnScan.style.display = 'block';
+            });
+        }
+
+        // Salva o ponto no LocalStorage
+        function registrarPonto() {
+            const now = new Date();
+            const dataStr = now.toLocaleDateString('pt-BR');
+            const horaStr = now.toLocaleTimeString('pt-BR');
+
+            const novoRegistro = { data: dataStr, hora: horaStr };
+            
+            // Pega o histórico antigo ou cria um array vazio
+            let historico = JSON.parse(localStorage.getItem('pontos_relampago')) || [];
+            historico.push(novoRegistro);
+            
+            // Salva de volta
+            localStorage.setItem('pontos_relampago', JSON.stringify(historico));
+            
+            renderizarHistorico();
+        }
+
+        // Exibe os dados na tabela
+        function renderizarHistorico() {
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = '';
+            
+            let historico = JSON.parse(localStorage.getItem('pontos_relampago')) || [];
+            
+            // Inverte para mostrar o mais recente no topo
+            historico.slice().reverse().forEach(registro => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${registro.data}</td>
+                    <td>${registro.hora}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Carrega o histórico ao abrir a página
+        window.onload = renderizarHistorico;
+    </script>
+</body>
+</html>
