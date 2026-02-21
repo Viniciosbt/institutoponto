@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
         :root {
             --primary-color: #007bff;
             --success-color: #28a745;
+            --danger-color: #dc3545;
             --bg-color: #f4f7f6;
             --text-color: #333;
             --card-bg: #ffffff;
@@ -81,6 +82,14 @@
             color: white;
         }
 
+        .btn-clear {
+            background-color: var(--danger-color);
+            color: white;
+            margin-top: 20px;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
         #reader {
             width: 100%;
             margin-bottom: 20px;
@@ -116,7 +125,7 @@
             body {
                 background-color: white;
                 padding: 0;
-                font-size: 12px; /* Fonte geral menor */
+                font-size: 12px; 
             }
             .container {
                 box-shadow: none;
@@ -134,7 +143,7 @@
                 text-align: center;
                 color: black;
                 margin-bottom: 15px;
-                font-size: 18px; /* Título menor para não ocupar muito espaço */
+                font-size: 18px; 
             }
             h3 {
                 font-size: 14px;
@@ -142,17 +151,17 @@
             }
             table {
                 border: 1px solid #000;
-                font-size: 11px; /* Fonte da tabela bem compacta */
+                font-size: 11px; 
             }
             th, td {
                 border: 1px solid #000;
-                padding: 4px; /* Linhas mais finas e compactas */
+                padding: 4px; 
             }
             tr {
-                page-break-inside: avoid; /* Não corta a linha no meio se pular de página */
+                page-break-inside: avoid; 
             }
             thead {
-                display: table-header-group; /* Repete o cabeçalho (Data/Hora) em todas as páginas impressas */
+                display: table-header-group; 
             }
         }
     </style>
@@ -183,13 +192,15 @@
                 <tbody id="history-body">
                 </tbody>
             </table>
+            
+            <button class="btn-clear" onclick="limparHistorico()">Limpar Histórico</button>
         </div>
     </div>
 
     <script>
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('pt-BR');
+            document.getElementById('clock').innerText = now.toLocaleTimeString('pt-PT');
         }
         setInterval(updateClock, 1000);
         updateClock();
@@ -216,14 +227,14 @@
                         readerDiv.style.display = 'none';
                         btnScan.style.display = 'block';
                         registrarPonto();
-                        alert("Ponto registrado com sucesso!");
+                        alert("Ponto registado com sucesso!");
                     });
                 },
                 (errorMessage) => {
                     // Ignora erros de leitura contínua
                 }
             ).catch((err) => {
-                alert("Erro ao acessar a câmera. Verifique as permissões.");
+                alert("Erro ao aceder à câmara. Verifique as permissões.");
                 readerDiv.style.display = 'none';
                 btnScan.style.display = 'block';
             });
@@ -231,8 +242,8 @@
 
         function registrarPonto() {
             const now = new Date();
-            const dataStr = now.toLocaleDateString('pt-BR');
-            const horaStr = now.toLocaleTimeString('pt-BR');
+            const dataStr = now.toLocaleDateString('pt-PT');
+            const horaStr = now.toLocaleTimeString('pt-PT');
 
             const novoRegistro = { data: dataStr, hora: horaStr };
             
@@ -258,6 +269,17 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // Nova função para limpar os dados
+        function limparHistorico() {
+            const confirmacao = confirm("Tem a certeza que deseja apagar todo o histórico? Certifique-se de que já imprimiu ou guardou os dados!");
+            
+            if (confirmacao) {
+                localStorage.removeItem('pontos_relampago');
+                renderizarHistorico(); // Atualiza a tabela para ficar vazia no ecrã
+                alert("Histórico limpo com sucesso.");
+            }
         }
 
         window.onload = renderizarHistorico;
